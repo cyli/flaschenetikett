@@ -245,7 +245,7 @@ def routes_from_module(module_name, prepath=''):
     """
     module = import_module(module_name)
     # this seems fragile
-    filename = re.sub('.*\.pyc$', '.py', module.__file__)
+    filename = re.sub('\.pyc$', '.py', module.__file__)
     tree = parseFile(filename)
 
     routes = []
