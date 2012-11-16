@@ -5,6 +5,8 @@ Generate documentation based on routes parsed using :mod:`routeparser`
 import itertools
 from optparse import OptionParser
 
+from flaschenetikett import routeparser
+
 
 class DocGenerator(object):
     """
@@ -69,6 +71,10 @@ class SphinxDocGenerator(DocGenerator):
         :class:`routeparser.routes_from_module`
     :type routes: ``list``
     """
+    def __init__(self, routes, dest_filename=None):
+        super(SphinxDocGenerator, self).__init__(routes,
+                                                 dest_filename or 'rest.rst')
+
     def formatRule(self, filehandle, rule, methods, **kwargs):
         """Results in something like:  GET /blah/blah/blah as a section title
         """
@@ -110,7 +116,6 @@ def cli(formatters, default=None):
     if len(args) < 1:
         parser.error("Need a module to parse")
 
-    import routeparser
     routes = itertools.chain(*[routeparser.routes_from_module(module)
                                for module in args])
 
