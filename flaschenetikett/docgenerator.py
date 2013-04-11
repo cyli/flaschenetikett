@@ -40,27 +40,26 @@ class DocGenerator(object):
         handler"""
         pass
 
-    def formatNode(self, filehandle, node):
-        """Adds to the documentation based on the AST node (probably just the
-        docstring)"""
+    def formatHandlerName(self, filehandle, name):
+        """Adds to the documentation based on the route handler's name"""
         pass
 
     def generate(self):
         """Writes the REST documentation to a file"""
         with open(self.filename, 'wb') as filehandle:
             for route in self.routes:
-                self.formatRule(filehandle, route['rule'], route['methods'],
-                                **route['route_kwargs'])
+                self.formatRule(filehandle, route.rule, route.methods,
+                                **route.werkzeug_kwargs)
 
-                for decorator in route['decorators']:
+                for decorator in route.decorators:
                     handler_name = 'handle_{0}'.format(decorator['name'])
                     handler = getattr(self, handler_name, None)
                     if handler is not None:
                         handler(filehandle, decorator)
 
-                self.formatDocstring(filehandle, route['docstring'])
+                self.formatDocstring(filehandle, route.docstring)
 
-                self.formatNode(filehandle, route['_node'])
+                self.formatHandlerName(filehandle, route.handler_name)
 
 
 class SphinxDocGenerator(DocGenerator):
