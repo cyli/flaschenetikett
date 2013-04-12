@@ -39,6 +39,7 @@ def write_markdown(routes, filehandle):
 
 def document_modules(module_names, filehandle, group_by_module=False):
     """
+    Generate documentation altogether or grouped by module
     """
     modules = [flaschenetikett.import_module(name) for name in module_names]
     if group_by_module:
