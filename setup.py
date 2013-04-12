@@ -1,17 +1,4 @@
-import os
 from setuptools import setup
-
-
-def getPackages(base):
-    packages = []
-
-    def visit(arg, directory, files):
-        if '__init__.py' in files:
-            packages.append(directory.replace('/', '.'))
-
-    os.path.walk(base, visit, None)
-
-    return packages
 
 
 setup(
@@ -25,5 +12,5 @@ setup(
     maintainer_email='cyli@twistedmatrix.com',
     license='MIT',
     url='https://github.com/cyli/flaschenetikett/',
-    packages=getPackages('flaschenetikett'),
+    py_modules=['flaschenetikett']
 )

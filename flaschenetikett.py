@@ -54,7 +54,13 @@ class AssemblyError(Exception):
 
 
 def flatten_name(name_node):
-    if isinstance(name_node, ast.Name):
+    """
+    Flattens a node into a string, but only if it is a L{`ast.Name`} or
+    L{ast.Getattr} or C{str}
+    """
+    if isinstance(name_node, str):
+        return name_node
+    elif isinstance(name_node, ast.Name):
         return name_node.name
     elif isinstance(name_node, ast.Getattr):
         return '{0}.{1}'.format(flatten_name(name_node.expr),
@@ -84,7 +90,7 @@ class Route(object):
     def _pretty_parse_rule(self):
         """
         Parses the werkzeug rule into a pretty path (instead of
-        ``/<string:name>``, ``/{name}``) and a dictionary that maps the
+        C{/<string:name>}, C{/{name}}) and a dictionary that maps the
         partial path fragment names with the type
 
         Only ``int`` and ``string`` types are supported.
@@ -107,8 +113,8 @@ class Route(object):
     @property
     def path(self):
         """
-        A pretty version of the werkzeug rule.  Rather than ``/<string:name>``,
-        path will contain ``/{name}``
+        A pretty version of the werkzeug rule.  Rather than C{/<string:name>},
+        path will contain C{/{name}}
         """
         if self._path is None:
             self._pretty_parse_rule()
@@ -178,23 +184,26 @@ class Route(object):
         return self._title
 
 
-class RouteFindingASTVisitor(visitor.ASTVisitor):
-    """A visitor for a parsed AST which finds Flask/Klein/Bottle routes, which
-    are handlers decorated by a ``@route`` or ``@app.route`` decorator,
-    containing a URL pattern that is then given to a ``werkzeug.routing.Rule``.
+class _RouteFindingASTVisitor(visitor.ASTVisitor):
+    """
+    A visitor for a parsed AST which finds Flask/Klein/Bottle routes, which
+    are handlers decorated by a C{@route} or C{@app.route} or some sort of
+    decorator, containing a URL pattern that is then given to a
+    L{werkzeug.routing.Rule}.
 
-    This assumes that the ``@route`` handlers are functions on a particular
+    This assumes that the C{@route} handlers are functions on a particular
     module, rather than methods on a class.
 
-    :ivar routes: a list of found routes encapsulated as :class:`Route` objects
-    :type routes: ``list`` of :class:`Route`
+    @ivar routes: a list of found routes encapsulated as
+        L{flaschenetikett.Route} objects
+    @type routes: C{list} of L{flaschenetikett.Route}
 
-    :ivar globals: a list of the module's global variables and imports,
+    @ivar globals: a list of the module's global variables and imports,
         so that variable used in the decorators can be looked up
-    :type globals: ``dict``
+    @type globals: C{dict}
 
-    :ivar prepath: the path to append to all the rules/paths
-    :type prepath: ``str``
+    @ivar prepath: the path to append to all the rules/paths
+    @type prepath: C{str}
     """
 
     def __init__(self, routes, module_globals=None, prepath=''):
@@ -243,12 +252,12 @@ class RouteFindingASTVisitor(visitor.ASTVisitor):
         containing the path/rule, the methods, and any other keyword args
         that get passed to a werkzeug rule.
 
-        :param route: something produced by :meth:`flattenDecorator`
-        :type route: ``dict``
+        @param route: something produced by L{flattenDecorator}
+        @type route: C{dict}
 
-        :return: dictionary containing the the rule, the methods, and the other
+        @return: dictionary containing the the rule, the methods, and the other
             keyword arguments
-        :rtype: ``dict``
+        @rtype: C{dict}
         """
         fragments = route['args'][0].split('/')
         fragments = [part for part in fragments if part.strip()]
@@ -262,18 +271,20 @@ class RouteFindingASTVisitor(visitor.ASTVisitor):
             'methods': route['kwargs'].get('methods', ['GET']),
             'werkzeug_kwargs': route['kwargs']
         }
-        del info['werkzeug_kwargs']['methods']
+        if 'methods' in info['werkzeug_kwargs']:
+            del info['werkzeug_kwargs']['methods']
         return info
 
     def flattenDecorator(self, decorator):
-        """Takes a decorator node and turns it into a flattened dictionary
+        """
+        Takes a decorator node and turns it into a flattened dictionary
         containing the name, the arguments to the decorator, and the keyword
         arguments to the decorator, all hopefully eval-ed.
 
-        :param decorator: the decorator AST node
-        :type decorator: :class:`compiler.ast.Node`
+        @param decorator: the decorator AST node
+        @type decorator: L{compiler.ast.Node}
 
-        :return
+        @return: C{dict}
         """
         flattened = {}
         nodes = decorator.getChildren()
@@ -295,10 +306,10 @@ class RouteFindingASTVisitor(visitor.ASTVisitor):
         no function call (although this can probably be supported at some
         point)
 
-        :param node: the AST node
-        :type node: :class:`compiler.ast.Node`
+        @param node: the AST node
+        @type node: L{compiler.ast.Node}
 
-        :return: value that the node evaluates to
+        @return: value that the node evaluates to
         """
         # Constant - return the value
         if node.__class__ == ast.Const:
@@ -343,11 +354,11 @@ def import_module(module_name):
     """
     Import a module and return all its globals as a dictionary
 
-    :param module_name: the module name separated by dots
-    :type module_name: ``str``
+    @param module_name: the module name separated by dots
+    @type module_name: C{str}
 
-    :return: the modules globals
-    :rtype: ``dict``
+    @return: the modules globals
+    @rtype: C{dict}
     """
     tokens = module_name.split('.')
     module = __import__(module_name)
@@ -356,28 +367,27 @@ def import_module(module_name):
     return module
 
 
-def routes_from_module(module_name, prepath=''):
+def routes_from_module(module, prepath=''):
     """
     Parse a module that contains werkzeug rules and handlers.  This will
     both import the module (so that symbols can be resolved) and parses the
     file itself (since I do not know how I can extract decorator arguments
     out of a compiled code object)
 
-    :param module_name: the module name separated by dots
-    :type module_name: ``str``
+    @param module_name: the module name separated by dots
+    @type module_name: C{str}
 
-    :param prepath: the prepath to use
+    @param prepath: the prepath to use
 
-    :return: the routes contained in the module
-    :rtype: ``list`` (see :class:`RouteFindingASTVisitor`)
+    @return: the routes contained in the module
+    @rtype: C{list} (see L{_RouteFindingASTVisitor})
     """
-    module = import_module(module_name)
     # this seems fragile
     filename = re.sub('\.pyc$', '.py', module.__file__)
     tree = parseFile(filename)
 
     routes = []
-    route_visitor = RouteFindingASTVisitor(routes, vars(module), prepath)
+    route_visitor = _RouteFindingASTVisitor(routes, vars(module), prepath)
     walk(tree, route_visitor, walker=route_visitor)
 
     return routes
