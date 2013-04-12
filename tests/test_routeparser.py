@@ -88,6 +88,7 @@ class RouteTestCase(TestCase):
         name_and_expected = [
             ('get_HTTP_Response_Code', 'Get HTTP response code'),
             ('mixedCamel_and_underscores', 'MixedCamel and underscores'),
+            ('camel_case_InTheMiddle', 'Camel case InTheMiddle'),
             ('__ignore_end_underscores__', 'Ignore end underscores')
         ]
         for name, expected in name_and_expected:

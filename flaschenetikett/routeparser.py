@@ -168,7 +168,7 @@ class Route(object):
             words = self._title.split('_')
 
             def _maybe_lower(word):
-                if word.isupper():
+                if word.isupper() or not word[1:].islower():
                     return word
                 return word.lower()
 
